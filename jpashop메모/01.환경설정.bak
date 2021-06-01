@@ -1,0 +1,11 @@
+Spring Boot + JPA È¯°æ
+--------------------------------------------------------------------------------
+start.spring.io
+Gradle Project
+DB : h2
+Java : 11
+Spring Boot 2.4.6
+Dependencies : Spring Web, Thymeleaf, Spring Data JPA, H2 Database, Lombok
+Tool : IntelliJ
+--------------------------------------------------------------------------------
+
