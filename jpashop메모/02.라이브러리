@@ -1,0 +1,21 @@
+02.라이브러리
+우측 상단에 Gradle 을 누르면 Dependencies 를 확인 할 수 있다.
+
+HikariCP : 스프링에서 기본으로 사용하는 커넥션 풀
+logging > logback, log4j, slf4j - 스프링 스타터에 기본으로 함께 있는 로그 관련 라이브러리
+
+Test 관련
+JUnit, mockito, assertj 테스트를 편하게 해주는 유틸리티 라이브러리
+
+핵심
+스프링 MVC
+스프링 ORM
+JPA, 하이버네이트
+스프링 데이터 JPA
+
+기타
+H2 데이터베이스 클라이언트
+커넥션 풀: 부트 기본은 HikariCP
+WEB(thymeleaf)
+로깅 SLF4J & LogBack
+테스트 

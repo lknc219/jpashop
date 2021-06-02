@@ -1,0 +1,21 @@
+03.View환경설정
+Thymeleaf
+
+장점 
+Natural templates 
+웹브라우저에서 그냥 열린다
+
+단점
+버전 2점대에선 닫는태그를 정확하게 매치시켜줘야한다.
+3.0에선 개선되어 안그래도 됨.
+메뉴얼을 보면서 해야한다.
+
+java 단에 HelloController 생성
+return "hello" 로 생성
+
+return 으로 .html과 경로 static, templates 등을 입력하지 않아도 되는건 스프링부트 기본 설정에 다 되어있기 때문이다.
+
+View 파일 수정시 서버 재기동 하지 않아도 되게 하는 설정
+spring-boot-devtools 라이브러리 추가! 
+	build.gradle에 
+	implementation 'org.springframework.boot:spring-boot-devtools' 추가
