@@ -1,0 +1,42 @@
+JPA, DB 연동 설정 후 동작 확인
+
+resources 에 있는 application.properties 파일 삭제 후 application.yml 파일 생성
+properties 나 yml 선택해서 사용해야하는데 복잡해지면 yml이 낫다고 한다.
+    
+MVCC=TRUE 는 한번에 여러 접근이 있을 때 좀 더 빠르게 동작하도록 해준다. 넣어주는게 권장된다.
+
+이러한 설정들은 스프링부트 메뉴얼에 들어가서 볼 수 있다 .
+Spring Boot > learn > Doc 를 들어가면 자세하게 나와있다. (자꾸 보는 버릇을 들이자)
+
+ddl-auto: create 
+
+spring:
+  datasource:
+    url: jdbc:h2:tcp://localhost/~/jpashop;MVCC=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibername:
+      ddl-auto: create --톰캣을 기동시킬때 jpa 엔티티 클래스를 보고 자동으로 해당테이블을 지우고 다시  테이블을 생성해준다.
+    properties:
+      hibername:
+        show_spl: true  --이건 Systemout 으로 찍는다. (사용안하고 debug 를 사용하는게 좋음!)
+        format_sql: true
+
+logging:
+  lebel:
+    org.hibername.SQL: debug --loger를 통해 찍는 설정
+    
+ 
+ 
+Member.java
+MemberRepository.java 파일생성(DAO 비슷한 것이라고 생각하면 됨)
+SpringBoot에서는 JPA 기초에서 배웠던 엔티티매니저를 직접 선언할 필요없이 어노테이션으로 가져다가 사용할 수 있다. 
+	build.gradle에서 가저온 라이브러리 implementation 'org.springframework.boot:spring-boot-starter-data-jpa' 에서 모두 지원해준다.
+	yml에서 설정해준 jpa 설정을 보고 spring boot stater 가 알아서 Bean을 생성해주기 때문에 가져다 사용할 수 있다.
+	@PersistenceContext 사용
+
+
+--8분55초부터 다시 JPA와 DB 설정 동작확인
