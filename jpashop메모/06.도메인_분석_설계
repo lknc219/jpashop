@@ -1,1 +1,66 @@
 도메인 분석 설계
+
+@Entity - 엔티티 선언
+@Getter @Setter - Lombok 으로 getter setter 선언
+@Embedded - 임베디드 타입 사용 선언
+@Embeddable - 임베디드타입 클래스
+@Id - 해당 엔티티의 아이디
+@GeneratedValue - 자동으로 id값 증가하면서 생성 (시퀀스와 비슷)
+@Column - 해당 컬럼에 대한 설정 가능 @Column(name = "member_id")
+@Table - 해당 엔티티 테이블에 대한 설정 @Table(name = "orders") // order는 예약어이기 때문에 orders 로 변경해서 사용
+
+엔티티끼리 연관관계를 설정할때 주인을 설정해줘야한다.
+연관관계의 주인은 외래키가 있는 엔티티로 정해준다.
+JPA를 사용할 때 업데이트를 할 엔티티를 정해야 하는 것인데 일대 다 관계에서 다수 부분에 외래키가 들어가므로 다에 주인을 설정해준다.
+일 관계에 있는 테이블을 주인으로 설정해주면 관리하기 어려워진다.
+
+@OneToMany(mappedBy = "member") - 연관관계에서 주인이 아니다 여기서 mappedBy 에 설정해준것은 연관되어있는 Member member <-이다.
+private List<order> orders = new ArrayList<>();
+
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "member_id") - 연관관계에서 주인이다.
+private Member member; 
+
+상속관계 전략 (싱글테이블 전략)
+	@Inheritance(strategy = InheritanceType.SINGLE_TABLE)  // 부모엔티티에 설정
+	@DiscriminatorColumn(name = "dtype") - 부모객채에 설정해주고
+
+	@DiscriminatorValue("B") - 싱글테이블에서 이 객체가 선택되면 dtype 이라는 컬럼에 B로 데이터를 입력해줄거라는 뜻
+	싱글테이블은 한테이블에 다 넣고 (예제에선 싱글테이블로)
+	조인은 정규화된 테이블로 사용
+
+@Enumerated(EnumType.STRING)
+Enum 타입을 쓸때는 ORDINAL 이 기본으로 되어있는데 STRING 타입으로 넣어줘야한다.
+ORDINAL은 Enum을 인덱스처럼 숫자로 표현해줘서 명확하지 않다. 중간에 다른 Enum 추가시 데이터가 숫자가 밀려서 DB가 잘못 입력될 위험
+
+일대일 관계에서 엔티티 맵핑
+	외래키를 어디에 두어도 되는 상황
+	액세스를 주로 많이 하는곳을 관계의 주인으로 둔다
+	예제에서는 딜리버리를 직접 조회하기보단 오더를 보면서 딜리버리를 본다고 가정한다.
+	외래키를 오더에 넣는다. => 연관관계의 주인
+
+카테고리는 계층형 엔티티를 설계 (원래는 다대다를 풀어줘야 하지만 여러 상황을 위해 다대다로 진행)
+	@ManyToMany
+	    @JoinTable(name = "category_item",
+	            joinColumns = @JoinColumn(name = "category_id"),
+	            inverseJoinColumns = @JoinColumn(name = "item_id")
+	    )
+  테이블이름을 설정해주고
+  해당 컬럼의 조인컬럼과 
+  연관관계에 있는 테이블의 조인컬럼을 설정해준다.
+  반대편 엔티티 클래스에는 mappedBy 만 설정해주면된다.
+
+계층형 구조
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private Category parent;
+    
+    @OneToMany(mappedBy = "parent")
+    private List<Category> child = new ArrayList<>();
+    
+    같은 엔티티에서 셀프로 연관관계를 엮어주면 된다.
+    
+엔티티 클래스 개발
+Getter는 가급적 열어두고, Setter 는 꼭 필요한 경우에만 사용하는 것을 추천
+Setter를 막 열어두면 가까운 미래에 엔티티가 도대체 왜 변경되는지 추적하기 점점 힘들어진다.
+엔티티를 변경할 때는 Setter 대신에 변경지점이 명확하도록 변경을 위한 비즈니스 메서드를 별도로 제공해야 한다.
