@@ -16,7 +16,6 @@ import java.util.List;
 //@AllArgsConstructor //필드를 가지고 알아서 생성자를 만들어줌
 public class MemberService {
 
-
     private final MemberRepository memberRepository;
 
     //생성자가 하나밖에없으면 자동으로 스프링이 주입해준다.
