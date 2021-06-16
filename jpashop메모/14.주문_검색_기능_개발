@@ -1,2 +1,25 @@
 주문 검색 기능 개발
 
+동적 쿼리를 개발하기 위한 예제
+
+회원명과 주문상태를 골라서 검색할 수 있다.
+
+검색에 필요한 VO 역할 클래스인 OrderSearch를 생성해준다. 
+검색에 필요한 memberName 과 orderStatus 를 필드로 넣어주고 Getter Setter 까지 만들어준다
+
+OrderRepository에 findAll 로 껍데기만 만들어놨던 메서드를 구현한다. 
+	1.findAllByString()
+	  주문상태나 회원이름이 있는경우 없는경우를
+	  모두 if로 분기점을 나눠 문자열을 하나하나 붙여가며 만드는 매우 어렵고 복잡한 방법도 있다. (버그발생률도 높음) 실무 사용 X
+
+	2.findAllByCriteria()
+	  JPQL을 자바언어로 작성할 때 JPA에서 표준으로 제공하는 방법이다.
+	  가독성도 떨어지고 유지보수성이 매우 떨어진다.
+	  가볍게 보도록 권장한다. 실무에서 사용 X
+	  
+	3.Querydsl로 처리 나중에 자세히 배우기
+	  동적쿼리 뿐 아니라 정적쿼리도 복잡해지면 querydsl로 할만큼 편하다 마지막쯤에 자세히 배운다고 한다.
+	  
+	프로젝트 할 때 기본적으로 Spring Boot, Spring JPA, Querydsl 은 꼭 가져간다고 한다.
+	
+
