@@ -31,6 +31,20 @@ jumbotron-narrow.css 파일 생성 후 참고파일에서 붙여넣기 해줬다.
 ====================================================================================
 
 회원 등록
+폼 객체를 사용해서 화면 계층과 서비스 계층을 명확하게 분리한다.
+강의 상 javax.validation이 스프링 부트 버전에 자동으로 주입되어 있지만 최신버전에서는 빠졌기 때문에 gradle.build 에 직접 추가해서 사용해줬다.
+
+    @GetMapping("/members/new")
+    public String createForm(Model model) {
+        model.addAttribute("memberForm", new MemberForm());
+        return "members/createMemberForm";
+    }
+    
+addAttribute 에서 빈 Memberform 을 가져가는 이유는 MemberForm 에 설정해둔 validation 등을 활용하기 위해
+해당 view 화면은 복붙으로 thymeleaf 템플릿으로 만들어준다.
+
+회원가입 submit 버튼을 누르면 post방식의 같은 맵핑 이름인 /members/new 로 맵핑해준다.
+컨트롤러의 매개변수 넣는 부분에 @Valid 를 넣어주면 MemberForm 에서 설정해준 @NotEmpty 같은 것을 활용할 수 있다.
 
 ====================================================================================
 
