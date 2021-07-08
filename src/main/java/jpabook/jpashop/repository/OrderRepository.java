@@ -94,6 +94,9 @@ public class OrderRepository {
         return query.getResultList();
     }
 
+    public void findAllWithMemberDelivery() {
+        em.createQuery("select ")
+    }
 }
 
 
