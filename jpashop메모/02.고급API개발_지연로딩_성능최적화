@@ -1,0 +1,150 @@
+고급 API
+
+API를 만들기 전 샘플 데이터를 먼저 생성한다
+	 userA
+	 	JPA1 BOOK
+	 	JPA2 BOOK
+	 	
+	 userB
+	 	SPRING1 BOOK
+	 	SPRING1 BOOK
+	 	
+====================================================================================================================================
+
+엔티티를 직접 노출하면 안되기 때문에 이런게 있다는 것만 알면 된다.
+
+엔티티 직접 노출 시 (V1)
+
+Order 엔티티는 Member와 Delivery 와 연관되어있다.
+
+Order의 전체 목록을 조회하는 OrderRepository.findAllByString(new OrderSearch()); 를 실행하면
+연관되어있는 엔티티에서 또 연관되어있는 엔티티를 찾아 무한루프를 돌게 된다.
+이를 @JsonIgnore 애너테이션으로 한쪽을 막아주는 방법으로 해결해 보려 해도 에러가 난다.
+간단한 해결법으로는 hibernate5Module을 스프링 빈으로 등록하면된다.
+
+	@Bean
+	Hibernate5Module hibernate5Module() {
+		return new Hibernate5Module();
+	}
+
+이렇게 하면 조회된 것들 중 LAZYLOADING인 것들은 null로 조회가 된다.
+
+hibernate5module 의 설정을 변경해서 값이 나오게 할 수 있다.
+
+
+====================================================================================================================================
+
+SimpleOrderDto 만든 후 조회(V2)
+
+    @GetMapping("/api/v2/simple-orders")
+    public List<SimpleOrderDto> ordersV2() {
+        List<Order> orders = orderRepository.findAllByString(new OrderSearch());
+
+        List<SimpleOrderDto> result = orders.stream()
+                .map(o -> new SimpleOrderDto(o))
+                .collect(Collectors.toList());
+
+        return result;
+    }
+
+    @Data
+    static class SimpleOrderDto {
+
+        private Long orderId;
+        private String name;
+        private LocalDateTime orderDate;
+        private OrderStatus orderStatus;
+        private Address address;
+
+        public SimpleOrderDto(Order order) {
+            orderId = order.getId();
+            name = order.getMember().getName();
+            orderDate = order.getOrderDate();
+            orderStatus = order.getStatus();
+            address = order.getDelivery().getAddress();
+        }
+    }
+
+하지만 이렇게 dto로 만들어서 조회 할 때도 N+1의 문제는 해결하지 못한다
+해당 코드에선 order 조회쿼리1 member2, delivery2  = 총 5개의 쿼리가 나가게 된다.
+
+====================================================================================================================================
+
+DTO로 변환 조회
+페치조인으로 N+1 쿼리 조회 문제 해결(V3)
+Dto도 만들고 엔티티끼리 페치조인(fetch join을 사용해서 쿼리 1번에 조회)
+페치조인으로 order -> member, order -> delivery 는 이미 조회 된 상태 이므로 지연로딩 X
+
+    @GetMapping("/api/v3/simple-orders")
+    public List<SimpleOrderDto> ordersV3() {
+        List<Order> orders = orderRepository.findAllWithMemberDelivery();
+        List<SimpleOrderDto> result = orders.stream()
+                .map(o -> new SimpleOrderDto(o))
+                .collect(Collectors.toList());
+        return result;
+    }
+    
+    
+    public List<Order> findAllWithMemberDelivery() {
+        List<Order> resultList = em.createQuery("select o from Order o" +
+                "join fetch o.member m" +
+                "join fetch o.delivery d", Order.class)
+                .getResultList();
+        return resultList;
+    }
+    
+    
+====================================================================================================================================
+
+DTO로 바로 조회
+V3 의 방법으로는 필요하지 않은 데이터도 모두 select 해온다.
+이를 필요한 필드만 select 해옴으로써, 성능을 올려리는 방법 (V4)
+
+repository에 새로운 패키지를 만든다 (repository.order.simplequery)
+
+public class OrderSimpleQueryRepository {
+
+    private final EntityManager em;
+
+    public List<OrderSimpleQueryDto> findOrderDtos() {
+        return em.createQuery("select new jpabook.jpashop.repository.order.simplequery.OrderSimpleQueryDto(o.id, m.name, o.orderDate, o.status. d.address) from Order o" +
+                "join o.member m" +
+                "join o.delivery d", OrderSimpleQueryDto.class)
+                .getResultList();
+    }
+}
+
+@Data
+public class OrderSimpleQueryDto {
+
+    private Long orderId;
+    private String name;
+    private LocalDateTime orderDate;
+    private OrderStatus orderStatus;
+    private Address address;
+
+    public OrderSimpleQueryDto(Long orderId, String name, LocalDateTime orderDate, OrderStatus orderStatus, Address address) {
+        this.orderId = orderId;
+        this.name = name;
+        this.orderDate = orderDate;
+        this.orderStatus = orderStatus;
+        this.address = address;
+    }
+}
+
+두개의 클래스를 추가해서 해당 기능에만 사용하고 재사용성이 떨어지는 Repository를 구현한다.
+보통 Repository는 엔티티에 직접 접근해 사용하고, 여러가지 Service 계층에서 재사용 되는 메소드를 만들지만
+이 Repository는 해당 화면에만 필요한 데이터를 뿌려주기만 하는 재사용성이 떨어지는 메소드를 구현하기 때문에 패키지를 분리해 유지보수를 하는 편이 좋다.
+
+====================================================================================================================================
+
+정리
+
+엔티티를 DTO로 변환하거나, DTO로 바로 조회하는 두가지 방법은 각각 장단점이 있다. 둘중 상황에 따라서 더 나은 방법을 선택하면 된다.
+엔티티로 조회하면 리포지토리 재사용성도 좋고, 개발도 단순해진다. 따라서 권장하는 방법은 다음과 같다.
+
+쿼리 방식 선택 권장 순서
+1. 우선 엔티티를 DTO로 변환하는 방법을 선택한다. (V2)
+2. 필요하면 페치조인으로 성능을 최적화 한다. -> 대부분의 성능이슈가 해결된다. (V3)
+3. 그래도 안되면 DTO로 직접 조회하는 방법을 사용한다. (V4)
+4. 최후의 방법은 JPA가 제공하는 네이티브 SQL이나 스프링 JDBC Template을 사용해서 SQL을 직접 사용한다.
