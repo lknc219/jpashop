@@ -29,11 +29,61 @@ hibernate5module을 빈으로 증록해주고 Order와 연관관계가 있는 엔티티 필드마다  js
 
 V2 엔티티를 DTO로 반환
 
-정리하기
+이전 예제들과 마찬가지로 엔티티를 DTO로 변환해서 뿌려준다.
+하지만 첫번째 엔티티껍데기 뿐만 아니라 엔티티속에 있는 엔티티도 모두 dto로 변환해주어야 한다.
+Order의 Orderitem 의 정보들도 모두 dto로 변환 후 출력해줘야함.
 
+이 방법의 경우 영속성 컨텍스트에 올라가지 않은 데이터를 조회할 때마다 쿼리를 호출해서 성능문제가 많다.
+
+    @GetMapping("/api/v2/orders")
+    public List<OrderDto> ordersV2() {
+        List<Order> orders = orderRepository.findAllByString(new OrderSearch());
+        List<OrderDto> collect = orders.stream()
+                .map(o -> new OrderDto(o))
+                .collect(Collectors.toList());
+        return collect;
+    }
+
+    @Data
+    static class OrderDto {
+
+        private Long orderId;
+        private String name;
+        private LocalDateTime localDateTime;
+        private OrderStatus orderStatus;
+        private Address address;
+        private List<OrderItemDto> orderItems;
+
+        public OrderDto(Order order) {
+            orderId = order.getId();
+            name = order.getMember().getName();
+            localDateTime = order.getOrderDate();
+            orderStatus = order.getStatus();
+            address = order.getDelivery().getAddress();
+            orderItems = order.getOrderItems().stream()
+                    .map(orderItem -> new OrderItemDto(orderItem))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @Data
+    static class OrderItemDto {
+
+        private String itemName;
+        private int orderPrice;
+        private int count;
+
+        public OrderItemDto(OrderItem orderItem) {
+
+            itemName = orderItem.getItem().getName();
+            orderPrice = orderItem.getOrderPrice();
+            count = orderItem.getCount();
+        }
+    }
 
 ====================================================================================================================================
 
+V3 페치조인으로 데이터 호출하기
 
 ====================================================================================================================================
 

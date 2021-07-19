@@ -1,25 +1,12 @@
-package jpabook.jpashop.api;
 
-import jpabook.jpashop.domain.Address;
-import jpabook.jpashop.domain.Order;
-import jpabook.jpashop.domain.OrderItem;
-import jpabook.jpashop.domain.OrderStatus;
-import jpabook.jpashop.repository.OrderRepository;
-import jpabook.jpashop.repository.OrderSearch;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+컬렉션 조회 최적화
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+====================================================================================================================================
 
-@RestController
-@RequiredArgsConstructor
-public class OrderApiController {
-
-    private final OrderRepository orderRepository;
+V1 엔티티를 직접 조회
+hibernate5module을 빈으로 증록해주고 Order와 연관관계가 있는 엔티티 필드마다  jsonignore 애너테이션을 선언해준다.
+각 엔티티의 필드들을 get 해줌으로써 강제로 초기화를 해주고 해당 값을 리턴해주는 방법.
+모든 엔티티의 필요하지 않은 정보들도 모두 반환되기 때문에 이렇게 Entity를 직접 반환하지않고 DTO를 만들어서 반환하는것이 옳다.
 
     @GetMapping("/api/v1/orders")
     public List<Order> orderV1() {
@@ -28,6 +15,7 @@ public class OrderApiController {
         for (Order order : all) {
             order.getMember().getName();
             order.getDelivery().getAddress();
+
             List<OrderItem> orderItems = order.getOrderItems();
 //            for (OrderItem orderItem : orderItems) {
 //                orderItem.getItem().getName();
@@ -36,22 +24,24 @@ public class OrderApiController {
         }
         return all;
     }
+    
+====================================================================================================================================
+
+V2 엔티티를 DTO로 반환
+
+이전 예제들과 마찬가지로 엔티티를 DTO로 변환해서 뿌려준다.
+하지만 첫번째 엔티티껍데기 뿐만 아니라 엔티티속에 있는 엔티티도 모두 dto로 변환해주어야 한다.
+Order의 Orderitem 의 정보들도 모두 dto로 변환 후 출력해줘야함.
+
+이 방법의 경우 영속성 컨텍스트에 올라가지 않은 데이터를 조회할 때마다 쿼리를 호출해서 성능문제가 많다.
 
     @GetMapping("/api/v2/orders")
     public List<OrderDto> ordersV2() {
         List<Order> orders = orderRepository.findAllByString(new OrderSearch());
-        List<OrderDto> result = orders.stream()
+        List<OrderDto> collect = orders.stream()
                 .map(o -> new OrderDto(o))
                 .collect(Collectors.toList());
-        return result;
-    }
-
-    @GetMapping("/api/v3/orders")
-    public List<OrderDto> ordersV3() {
-        List<Order> orders = orderRepository.findAllWithItem();
-        return orders.stream()
-                .map(o -> new OrderDto(o))
-                .collect(Collectors.toList());
+        return collect;
     }
 
     @Data
@@ -90,4 +80,11 @@ public class OrderApiController {
             count = orderItem.getCount();
         }
     }
-}
+
+====================================================================================================================================
+
+
+====================================================================================================================================
+
+
+====================================================================================================================================
