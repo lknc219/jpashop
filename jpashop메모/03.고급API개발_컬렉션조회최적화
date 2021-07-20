@@ -85,7 +85,41 @@ Order의 Orderitem 의 정보들도 모두 dto로 변환 후 출력해줘야함.
 
 V3 페치조인으로 데이터 호출하기
 
+페치조인으로 불러오면 컬렉션의 일대다 데이터는 뻥튀기 되어온다.
+그래서 select 앞에 distinct 를 붙여주어 데이터베이스상에서도 distinct를 사용하고 
+뻥튀기 되어온 데이터중 아이디값으로 애플리케이션에서 또 한번 중복을 제거해주기때문에 원하는 데이터의 갯수만큼 가져올 수 있다.
+하지만 컬렉션에서 페치조인은 페이징이 불가능하다.
+데이터를 모두 가져 온 후 애플리케이션 메모리에서 페이징을 하게 되는데 이는 큰 과부하를 일으킬 수 있기때문에 사용 x
+중복제거를 DB상에서 하는것이 아니고 애플리케이션에서 하기때문에 일단 모두 가져와야한다.
+
+    @GetMapping("/api/v3/orders")
+    public List<OrderDto> ordersV3() {
+        List<Order> orders = orderRepository.findAllWithItem();
+        List<OrderDto> result = orders.stream()
+                .map(o -> new OrderDto(o))
+                .collect(Collectors.toList());
+        return result;
+    }
+
+    public List<Order> findAllWithItem() {
+        return em.createQuery(
+                "select distinct o from Order o"+
+                        " join fetch o.member m" +
+                        " join fetch o.delivery d" +
+                        " join fetch o.orderItems oi" +
+                        " join fetch oi.item i", Order.class)
+                .getResultList();
+    }
+    
+
+
+
 ====================================================================================================================================
+
+V3.1 페이징과 한계돌파
+컬렉션을 페이징할 수 없다 (일대다이기떄문)
+우리는 order를 기준으로 한 데이터 갯수를 받고 싶지만
+DB입장에서는 items의 데이터가 많기때문에 조인 하는 순간 데이터의 갯수가 items를 기준으로 맞춰진다.
 
 
 ====================================================================================================================================
