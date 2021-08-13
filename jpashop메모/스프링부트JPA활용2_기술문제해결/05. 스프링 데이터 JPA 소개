@@ -1,0 +1,6 @@
+스프링 데이터 JPA 소개
+
+JPA에서 interface JpaReposity 라는것을 제공하는데 여기에 기본적인 CRUD는 모두 제공한다고 보면된다.
+공통 메서드가 아닌 name 을 찾는 select 문은 인터페이스에 findByName(String name) 을 선언해주면 
+select m from Member m where m.name = ? 라는 쿼리를 자동으로 만들어 실행해준다.
+인터페이스만 만들어주면 구현은 Spring Data JPA가 애플리케이션 구동시에 자동으로 함.
